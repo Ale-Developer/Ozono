@@ -24,6 +24,7 @@ baseDeDatos = f"{rutaBD}/{archivoBD}"
 
 def conectar():
     if(os.path.isfile(baseDeDatosLogin) == True):
+        global conexion
         conexion = sqlite3.connect(baseDeDatosLogin)
         conexion.row_factory = sqlite3.Row
         return conexion

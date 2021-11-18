@@ -22,3 +22,4 @@ def soloNumeros(datos):
             if (numero.isdigit() == False):
                 return False
     return True
+
