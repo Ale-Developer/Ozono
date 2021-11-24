@@ -11,7 +11,8 @@ from model.signup import *
 from model.conexion import *
 from model.ventanaError import *
 from model.consultas import *
-
+ventanaAgregar = None
+listadoCompras=[]
 
 def ventanaLogin():
     ventanaLogin = Tk()
@@ -86,7 +87,7 @@ def ventanaLogin():
 
     ventanaLogin.mainloop()
 
-
+ventanaPrincipal = None
 def ventanaPrincipal():
     root1 = Tk()
     root1.title("Ozono")
@@ -633,7 +634,7 @@ def ventanaPrincipal():
 
     def buscarPorNombre(evento):
         buscar = ("%"+entryBuscarPorNombre.get()+"%",
-                  "%"+entryBuscarPorNombre.get()+"%",)
+                "%"+entryBuscarPorNombre.get()+"%",)
         tabla = conexion.cursor()
         tabla.execute(
             "SELECT * FROM Proveedores WHERE razonSocialProveedor LIKE ? OR cuitProveedor LIKE ?", buscar)
@@ -642,7 +643,7 @@ def ventanaPrincipal():
             tablaListarProveedor.delete(filas)
         for dato in datosListar:
             tablaListarProveedor.insert("", END, text=dato["idProveedor"], values=(dato["razonSocialProveedor"], dato["cuitProveedor"], dato["direccionProveedor"],
-                                      dato["localidadProveedor"], dato["provinciaProveedor"], dato["codigoPostalProveedor"], dato["telefonoProveedor"], dato["ivaProveedor"]))
+                                    dato["localidadProveedor"], dato["provinciaProveedor"], dato["codigoPostalProveedor"], dato["telefonoProveedor"], dato["ivaProveedor"]))
 
     entryBuscarPorNombre.bind("<Key>", buscarPorNombre)
 
@@ -669,107 +670,14 @@ def ventanaPrincipal():
 
     #Pestaña Compra #######################################################################
 
-    fecha = date.today()
-    hora = datetime.now()
-    fechaActual = fecha.strftime("%d-%m-%Y")
-    horaExacta = f"{hora.hour}{hora.minute}{hora.second}"
-    fechaHora = fecha.strftime("%d/%m/%Y")+" "+time.strftime("%H:%M:%S")
-
-    labelFrameCompra = LabelFrame(p1, text="Compra")
-    labelFrameCompra.config(width=1440//4, height=1100//2)
-    labelFrameCompra.place(x=10, y=10)
-    
-    labelFechaCompra = Label(labelFrameCompra, text="Fecha: ")
-    labelFechaCompra.place(x=30, y=30)
-    entryFechaCompra = Entry(labelFrameCompra, width=33)
-    entryFechaCompra.insert(END,fechaActual)
-    entryFechaCompra.config(state="readonly")
-    entryFechaCompra.place(x=120, y=30)
-
-    labelMarcaCompra = Label(labelFrameCompra, text="Marca: ")
-    labelMarcaCompra.place(x=30, y=80)
-    entryMarcaCompra = Entry(labelFrameCompra, width=33)
-    entryMarcaCompra.config(state="normal")
-    entryMarcaCompra.place(x=120, y=80)
-
-    labelModeloCompra = Label(labelFrameCompra, text="Modelo: ")
-    labelModeloCompra.place(x=30, y=130)
-    entryModeloCompra = Entry(labelFrameCompra, width=33)
-    entryModeloCompra.place(x=120, y=130)
-    
-    labelEANCompra = Label(labelFrameCompra, text="EAN: ")
-    labelEANCompra.place(x=30, y=180)
-    entryEANCompra = Entry(labelFrameCompra, width=33)
-    entryEANCompra.place(x=120, y=180)
-
-    labelCategoriaCompra = Label(labelFrameCompra, text="Categoria: ")
-    labelCategoriaCompra.place(x=30, y=230)
-    entryCategoriaCompra = Entry(labelFrameCompra, width=33)
-    entryCategoriaCompra.place(x=120, y=230)
-
-    labelCantidadCompra = Label(labelFrameCompra, text="Cantidad: ")
-    labelCantidadCompra.place(x=30, y=280)
-    entryCantidadCompra = Entry(labelFrameCompra, width=33)
-    entryCantidadCompra.place(x=120, y=280)
-
-    labelPrecioCostoCompra = Label(labelFrameCompra, text="Precio Costo: ")
-    labelPrecioCostoCompra.place(x=30, y=330)
-    entryPrecioCostoCompra = Entry(labelFrameCompra, width=33)
-    entryPrecioCostoCompra.place(x=120, y=330)
-
-    labelPrecioVentaCompra = Label(labelFrameCompra, text="Precio Venta: ")
-    labelPrecioVentaCompra.place(x=30, y=380)
-    entryPrecioVentaCompra = Entry(labelFrameCompra, width=33)
-    entryPrecioVentaCompra.place(x=120, y=380)
-    
-    def compra():
-        pass
-
-
-    def compraArticulo():
-        conexion = conectarBD()
-        datos = (entryMarcaCompra.get(),
-        entryModeloCompra.get(),
-        entryCategoriaCompra.get(),
-        entryCantidadCompra.get(),
-        entryPrecioCostoCompra.get(),
-        entryPrecioVentaCompra.get())
-        #guarda Articulo
-        tabla = conexion.cursor()
-        sql = "INSERT INTO Articulos (marcaArticulo, modeloArticulo, categoriaArticulo, stockArticulo, precioCosto, precioVenta) VALUES(?,?,?,?,?,?)"
-        tabla.execute(sql,datos)
-        conexion.commit()
-        #guardar compra
-        datosCompra = (fechaActual,entryPrecioCostoCompra.get())
-        sql2 = "INSERT INTO Compra (fechaCompra, TotalCompra) VALUES (?,?)"
-        tabla.execute(sql2,datosCompra)
-        conexion.commit()
-        #guarda articulos comprados
-        buscarNCompra= "SELECT MAX(numeroCompra) FROM Compra"
-        tabla.execute(buscarNCompra)
-        maxNCompra= tabla.fetchall()
-        buscarIdArticulo= "SELECT MAX(codigoArticulo) FROM Articulos"
-        tabla.execute(buscarIdArticulo)
-        maxIdArticulo= tabla.fetchall()
-        datosArticulos= (maxNCompra[0][0],maxIdArticulo[0][0],entryPrecioCostoCompra.get())
-        sql3= "INSERT INTO articulosCompras(numeroCompra,idArticulo,total) VALUES(?,?,?)"
-        tabla.execute (sql3,datosArticulos)
-        conexion.commit()
-        tabla.close()
-        conexion.close()
-        mb.showinfo("Ozono","Compra realizada exitosamente!")
-    
-    botonComprarCompra = Button(labelFrameCompra, text="Comprar",command=compraArticulo)
-    botonComprarCompra.place(x=160,y=430)
-
     #Treeview de compra--------------------
     
-    labelFrameCompra = LabelFrame(p1, text="Buscar articulos")
-    labelFrameCompra.config(width=2450//4, height=1100//2)
-    labelFrameCompra.place(x=380, y=10)
+    labelFrameCompra = LabelFrame(p1, text="Listado de articulos")
+    labelFrameCompra.config(width=3900//4, height=1100//2)
+    labelFrameCompra.place(x=10, y=10)
     
     tablaListarCompra = ttk.Treeview(labelFrameCompra, columns=(
-        "col1", "col2", "col3", "col4", "col5", "col6", "col7"))
+        "col1", "col2", "col3", "col4", "col5", "col6", "col7", "col8"))
     tablaListarCompra.column("#0", width=2)
 
     tablaListarCompra.column("col1", width=33, anchor=CENTER)
@@ -778,38 +686,195 @@ def ventanaPrincipal():
     tablaListarCompra.column("col4", width=33, anchor=CENTER)
     tablaListarCompra.column("col5", width=33, anchor=CENTER)
     tablaListarCompra.column("col6", width=20, anchor=CENTER)
-    tablaListarCompra.column("col7", width=33, anchor=CENTER)
-
+    tablaListarCompra.column("col7", width=20, anchor=CENTER)
+    tablaListarCompra.column("col8", width=20, anchor=CENTER)
+    
     tablaListarCompra.heading("#0", text="ID", anchor=CENTER)
     tablaListarCompra.heading("col1", text="Marca", anchor=CENTER)
     tablaListarCompra.heading("col2", text="Modelo", anchor=CENTER)
     tablaListarCompra.heading("col3", text="EAN", anchor=CENTER)
-    tablaListarCompra.heading("col4", text="Categoria", anchor=CENTER)
+    tablaListarCompra.heading("col4", text="Precio", anchor=CENTER)
     tablaListarCompra.heading("col5", text="Cantidad", anchor=CENTER)
-    tablaListarCompra.heading("col6", text="Costo", anchor=CENTER)
-    tablaListarCompra.heading("col7", text="Venta", anchor=CENTER)
+    tablaListarCompra.heading("col6", text="Subtotal", anchor=CENTER)
+    tablaListarCompra.heading("col7", text="I.V.A", anchor=CENTER)
+    tablaListarCompra.heading("col8", text="Total", anchor=CENTER)
+    
+    tablaListarCompra.place(x=4, y=10, width=960, height=300)
+    
+    def carritoCompra():
+        global ventanaAgregar
+        def cerrarTop():
+            global ventanaAgregar
+            ventanaAgregar.destroy()
+            ventanaAgregar = None
+        if ventanaAgregar == None:
+            ventanaAgregar = Toplevel()
+            ventanaAgregar.geometry("600x600")
+            ventanaAgregar.resizable(0,0)
+            ventanaAgregar.title("Compra de articulos")
+            
+            def listarArticulosCompra():
+                borrarListarArticulos()
+                tabla = conexion.cursor()
+                sql = "SELECT codigoArticulo,marcaArticulo,modeloArticulo,EAN,categoriaArticulo,stockArticulo,precioCosto,precioVenta FROM Articulos"
+                tabla.execute(sql)
+                datosListar = tabla.fetchall()
+                tabla.close()
+                for dato in datosListar:
+                    tablaListarCarritoCompra.insert("", END, text=dato["codigoArticulo"], values=(dato["marcaArticulo"], 
+                                            dato["modeloArticulo"],dato["EAN"]))
+            
+            labelFrameCarritoCompra = ttk.Labelframe(ventanaAgregar, text="Compra")
+            labelFrameCarritoCompra.config(width=1150//2, height=1200//2)
+            labelFrameCarritoCompra.place(x=10,y=10)
+            
+            tablaListarCarritoCompra = ttk.Treeview(labelFrameCarritoCompra, columns=(
+                                            "col1", "col2", "col3"))
+            tablaListarCarritoCompra.column("#0", width=15)
 
-    tablaListarCompra.place(x=4, y=10, width=600, height=250)
+            tablaListarCarritoCompra.column("col1", width=33, anchor=CENTER)
+            tablaListarCarritoCompra.column("col2", width=33, anchor=CENTER)
+            tablaListarCarritoCompra.column("col3", width=33, anchor=CENTER)
+                        
+            tablaListarCarritoCompra.heading("#0", text="ID", anchor=CENTER)
+            tablaListarCarritoCompra.heading("col1", text="Marca", anchor=CENTER)
+            tablaListarCarritoCompra.heading("col2", text="Modelo", anchor=CENTER)
+            tablaListarCarritoCompra.heading("col3", text="EAN", anchor=CENTER)
+            
+            tablaListarCarritoCompra.place(x=4, y=10, width=550, height=250)
+            
+            labelCodigoCompra = Label(ventanaAgregar, text="Código: ")
+            labelCodigoCompra.place(x=30, y=300)
+            entryCodigoCompra = Entry(ventanaAgregar, width=33)
+            entryCodigoCompra.place(x=120, y=300)
+            
+            labelMarcaCompra = Label(ventanaAgregar, text="Marca: ")
+            labelMarcaCompra.place(x=30, y=340)
+            entryMarcaCompra = Entry(ventanaAgregar, width=33)
+            entryMarcaCompra.place(x=120, y=340)
+            
+            labelModeloCompra = Label(ventanaAgregar, text="Modelo: ")
+            labelModeloCompra.place(x=30, y=380)
+            entryModeloCompra = Entry(ventanaAgregar, width=33)
+            entryModeloCompra.place(x=120, y=380)
+            
+            labelEanCompra = Label(ventanaAgregar, text="EAN: ")
+            labelEanCompra.place(x=30, y=420)
+            entryEanCompra = Entry(ventanaAgregar, width=33)
+            entryEanCompra.place(x=120, y=420)
+            
+            labelCantidadCompra = Label(ventanaAgregar, text="Cantidad: ")
+            labelCantidadCompra.place(x=30, y=460)
+            entryCantidadCompra = Entry(ventanaAgregar, width=33)
+            entryCantidadCompra.place(x=120, y=460)
+            
+            labelPrecioCompra = Label(ventanaAgregar, text="Precio: ")
+            labelPrecioCompra.place(x=30, y=500)
+            entryPrecioCompra = Entry(ventanaAgregar, width=33)
+            entryPrecioCompra.place(x=120, y=500)
+            
+            labelIvaCompra = Label(ventanaAgregar, text="I.V.A: ")
+            labelIvaCompra.place(x=30, y=540)
+            entryIvaCompra = Entry(ventanaAgregar, width=33)
+            entryIvaCompra.place(x=120, y=540)
+            
+            def ingresarArticulo():
+                entryCodigoCompra.config(state="normal")
+                entryMarcaCompra.config(state="normal")
+                entryModeloCompra.config(state="normal")
+                entryEanCompra.config(state="normal")
+                codigoArt = entryCodigoCompra.get()
+                marca= entryMarcaCompra.get()
+                modelo= entryModeloCompra.get()
+                ean= entryEanCompra.get()
+                cantidad= entryCantidadCompra.get()
+                precioUnitario=float(entryPrecioCompra.get())
+                subtotal = float(entryPrecioCompra.get())*int(cantidad)
+                iva = (int(entryIvaCompra.get())*float(subtotal))/100
+                total = subtotal+float(iva)
+                tablaListarCompra.insert("",END,text=codigoArt,values=(marca,modelo,ean,"$"+str(precioUnitario),cantidad,subtotal,iva,total))
+                entryCodigoCompra.config(state="readonly")
+                entryMarcaCompra.config(state="readonly")
+                entryModeloCompra.config(state="readonly")
+                entryEanCompra.config(state="readonly")
+                datos = [codigoArt,
+                        precioUnitario,
+                        cantidad,
+                        subtotal,
+                        iva,
+                        total]
+                listadoCompras.append(datos)
+            
+            botonIngresarArticulo = Button(ventanaAgregar,text="Ingresar Articulo",command=ingresarArticulo)
+            botonIngresarArticulo.place(x=180,y=580)
+            
+            botonListarArticulos = Button(
+            ventanaAgregar, text="Listar", command=listarArticulosCompra)
+            botonListarArticulos.place(x=110, y=580)
+            
+            def infoCompraArticulo(evento):
+                index= tablaListarCarritoCompra.item(tablaListarCarritoCompra.selection())['text']
+                detalles=tablaListarCarritoCompra.item(tablaListarCarritoCompra.selection())['values']
+                marca=f"{detalles[0]}"
+                modelo=f"{detalles[1]}"
+                ean=f"{detalles[2]}"
+                entryCodigoCompra.config(state="normal")
+                entryMarcaCompra.config(state="normal")
+                entryModeloCompra.config(state="normal")
+                entryEanCompra.config(state="normal")
+                entryCodigoCompra.delete(0,END)
+                entryCodigoCompra.insert(END,index)
+                entryMarcaCompra.delete(0,END)
+                entryMarcaCompra.insert(END,marca)
+                entryModeloCompra.delete(0,END)
+                entryModeloCompra.insert(END,modelo)
+                entryEanCompra.delete(0,END)
+                entryEanCompra.insert(END,ean)
+                entryCodigoCompra.config(state="readonly")
+                entryMarcaCompra.config(state="readonly")
+                entryModeloCompra.config(state="readonly")
+                entryEanCompra.config(state="readonly")
+            tablaListarCarritoCompra.bind("<<TreeviewSelect>>",infoCompraArticulo)
+            
+            def ingresarArticulo():
+                entryCodigoCompra.config(state="normal")
+                entryMarcaCompra.config(state="normal")
+                entryModeloCompra.config(state="normal")
+                codigoArt = entryCodigoCompra.get()
+                marca= entryMarcaCompra.get()
+                modelo= entryModeloCompra.get()
+                cantidad= entryCantidadCompra.get()
+                precioUnitario=float(entryPrecioCompra.get())/int(cantidad)
+                subtotal = float(entryPrecioCompra.get())
+                iva = entryIvaCompra.get()
+                total = subtotal+float(iva)
+                tablaListarCompra.insert("",END,text=codigoArt,values=(marca,modelo,"$"+str(precioUnitario),cantidad,subtotal,iva,total))
+                entryCodigoCompra.config(state="readonly")
+                entryMarcaCompra.config(state="readonly")
+                entryModeloCompra.config(state="readonly")
+                datos = [codigoArt,
+                        precioUnitario,
+                        cantidad,
+                        subtotal,
+                        iva,
+                        total]
+                listadoCompras.append(datos)
+            
+            ventanaAgregar.protocol("WM_DELETE_WINDOW",cerrarTop)
+    botonAgregarArticulos = Button(p1,text="Agregar articulos",command=carritoCompra)
+    botonAgregarArticulos.place(x=350,y=350)
     
-    def mostrarDatoLista(evento):
-        id = tablaListarCompra.item(tablaListarCompra.selection()["text"])
-        valores = tablaListarCompra.item(
-            tablaListarCompra.selection())["values"]
-    tablaListarCompra.bind("<<TreeviewSelect>>", mostrarDatoLista)
+    def Comprar():
+        pass
     
+    botonAgregarArticulos = Button(p1,text="Comprar",command=Comprar)
+    botonAgregarArticulos.place(x=380,y=350)
+        
     # Buscar Articulo en grid:
+                        
     
-    def listarArticulo():
-        borrarListarCompra()
-        tabla = conexion.cursor()
-        sql = "SELECT marcaArticulo,modeloArticulo,EAN,categoriaArticulo,stockArticulo,precioCosto,precioVenta FROM Articulos"
-        tabla.execute(sql)
-        datosListar = tabla.fetchall()
-        for dato in datosListar:
-            tablaListarCompra.insert("", END, text=dato[""], values=(dato["marcaArticulo"], dato["modeloArticulo"], dato["EAN"],
-                                    dato["categoriaArticulo"], dato["stockArticulo"], dato["precioCosto"], dato["precioVenta"]))
 
-    def vaciarEntryCompra():
+    '''def vaciarEntryCompra():
         entryMarcaCompra.config(state="normal")
         entryMarcaCompra.delete(0, END)
         entryModeloCompra.delete(0, END)
@@ -818,34 +883,10 @@ def ventanaPrincipal():
         entryCategoriaCompra.delete(0, END)
         entryCantidadCompra.delete(0, END)
         entryPrecioCostoCompra.delete(0, END)
-        entryPrecioVentaCompra.delete(0, END)
+        entryPrecioVentaCompra.delete(0, END)'''
 
-    def BuscarArticuloEAN():
-        datosEAN = ("%"+entryBuscarArticulo.get()+"%",)
-        if (vacios(datosEAN)):
-            tabla = conexion.cursor()
-            sql = "SELECT * FROM Articulos WHERE EAN LIKE ?"
-            tabla.execute(sql, datosEAN)
-            datosEAN = tabla.fetchall()
-            if(len(datosEAN) > 0):
-                vaciarEntryCompra()
-                for dato in datosEAN:
-                    entryMarcaCompra.insert(END, dato["marcaArticulo"])
-                    entryMarcaCompra.config(state="readonly")
-                    entryModeloCompra.insert(END, dato["modeloArticulo"])
-                    entryEANCompra.insert(END, dato["EAN"])
-                    entryEANCompra.config(state="disabled")
-                    entryCategoriaCompra.insert(END, dato["categoriaArticulo"])
-                    entryCantidadCompra.insert(END, dato["stockArticulo"])
-                    entryPrecioCostoCompra.insert(END, dato["precioCosto"])
-                    entryPrecioVentaCompra.insert(END, dato["precioVenta"])
-            else:
-                mb.showwarning("Sistema", "El dato ingresado no existe")
-                vaciarEntryCompra()
-        else:
-            mb.showwarning("Sistema", "Debe ingresar el EAN")
-
-    # Buscar articulo con EAN
+    
+    '''# Buscar articulo con EAN
     labelBuscarArticulo = Label(labelFrameCompra, text="EAN:")
     labelBuscarArticulo.place(x=4, y=400)
     entryBuscarArticulo = Entry(labelFrameCompra, width=33)
@@ -874,7 +915,7 @@ def ventanaPrincipal():
             tablaListarCliente.insert("", END, text=dato["idClientes"], values=(dato["razonSocialCliente"], dato["cuitCliente"], dato["direccionCliente"],
                                       dato["localidadCliente"], dato["provinciaCliente"], dato["codigoPostalCliente"], dato["telefonoCliente"], dato["ivaCliente"]))
 
-    entryBuscarPorNombre.bind("<Key>", buscarPorNombre)
+    entryBuscarPorNombre.bind("<Key>", buscarPorNombre)'''
 
     #Pestaña articulo ****************************************************************************
     
@@ -885,7 +926,7 @@ def ventanaPrincipal():
         entryModeloArticulos.config(state="normal")
         entryModeloArticulos.delete(0, END)
         entryEanArticulos.delete(0, END)
-        entryCategoriaArticulos.delete(0, END)
+        comboCategoriaArticulos.delete(0, END)
         entryStockArticulos.delete(0, END)
         entryPrecioCostoArticulos.delete(0, END)
         entryPrecioVentaArticulos.delete(0, END)
@@ -896,14 +937,16 @@ def ventanaPrincipal():
         sql = "SELECT codigoArticulo,marcaArticulo,modeloArticulo,EAN,categoriaArticulo,stockArticulo,precioCosto,precioVenta FROM Articulos"
         tabla.execute(sql)
         datosListar = tabla.fetchall()
+        tabla.close()
         for dato in datosListar:
             tablaListarArticulos.insert("", END, text=dato["codigoArticulo"], values=(dato["marcaArticulo"], 
                                     dato["modeloArticulo"],dato["EAN"],dato["categoriaArticulo"],dato["stockArticulo"], 
                                     dato["precioCosto"], dato["precioVenta"]))
+        
 
     def modificarArticulos():
         entryIdArticulos.config(state="normal")
-        datosArticulos = (entryMarcaArticulos.get(), entryModeloArticulos.get(),entryEanArticulos.get(), entryCategoriaArticulos.get(), 
+        datosArticulos = (entryMarcaArticulos.get(), entryModeloArticulos.get(),entryEanArticulos.get(), comboCategoriaArticulos.get(), 
                         entryStockArticulos.get(), entryPrecioCostoArticulos.get(), entryPrecioVentaArticulos.get())
         entryIdArticulos.config(state="disabled")
         if (datosArticulos[7] != ""):
@@ -924,7 +967,7 @@ def ventanaPrincipal():
         datos = (entryMarcaArticulos.get(), 
                         entryModeloArticulos.get(), 
                         entryEanArticulos.get(), 
-                        entryCategoriaArticulos.get(), 
+                        comboCategoriaArticulos.get(), 
                         entryStockArticulos.get(), 
                         entryPrecioCostoArticulos.get(), 
                         entryPrecioVentaArticulos.get())
@@ -970,8 +1013,12 @@ def ventanaPrincipal():
 
     labelCategoriaArticulos = Label(labelFrameArticulos, text="Categoria: ")
     labelCategoriaArticulos.place(x=30, y=230)
-    entryCategoriaArticulos = Entry(labelFrameArticulos, width=33)
-    entryCategoriaArticulos.place(x=120, y=230)
+    categoria = ('Almacén','Bebidas','Perecederos','Bazar','Perfumería','Limpieza','Ferretería','Electrónica')
+    comboCategoriaArticulos = ttk.Combobox(labelFrameArticulos, width=33)
+    comboCategoriaArticulos['values'] = categoria
+    comboCategoriaArticulos['state'] = 'readonly'
+    comboCategoriaArticulos.place(x=120, y=230)
+    
 
     labelStockArticulos = Label(labelFrameArticulos, text="Stock: ")
     labelStockArticulos.place(x=30, y=280)
@@ -1018,10 +1065,11 @@ def ventanaPrincipal():
                     entryModeloArticulos.insert(END, dato["modeloArticulo"])
                     entryEanArticulos.insert(END, dato["EAN"])
                     entryEanArticulos.config(state="disabled")
-                    entryCategoriaArticulos.insert(END, dato["categoriaArticulo"])
+                    comboCategoriaArticulos.insert(END, dato["categoriaArticulo"])
                     entryStockArticulos.insert(END, dato["stockArticulo"])
                     entryPrecioCostoArticulos.insert(END, dato["precioCosto"])
                     entryPrecioVentaArticulos.insert(END, dato["precioVenta"])
+                    tabla.close()
                     mb.showwarning("Sistema", "Busqueda Completada")
             else:
                 mb.showwarning("Sistema", "El dato ingresado no existe")
@@ -1056,11 +1104,38 @@ def ventanaPrincipal():
 
     tablaListarArticulos.place(x=4, y=10, width=600, height=250)
 
-    def mostrarDatoListaArticulos(evento):
-        id = tablaListarArticulos.item(tablaListarArticulos.selection()["text"])
-        valores = tablaListarArticulos.item(
-            tablaListarArticulos.selection())["values"]
-    tablaListarArticulos.bind("<<TreeviewSelect>>", mostrarDatoListaArticulos)
+
+    def infoArticulo(evento):
+        index= tablaListarArticulos.item(tablaListarArticulos.selection())['text']
+        detalles=tablaListarArticulos.item(tablaListarArticulos.selection())['values']
+        marca=f"{detalles[0]}"
+        modelo=f"{detalles[1]}"
+        ean=f"{detalles[2]}"
+        categoria=f"{detalles[3]}"
+        stock=f"{detalles[4]}"
+        pCosto=f"{detalles[5]}"
+        pVenta=f"{detalles[6]}"
+        entryIdArticulos.config(state="normal")
+        entryMarcaArticulos.config(state="normal")
+        entryIdArticulos.delete(0,END)
+        entryIdArticulos.insert(END,index)
+        entryMarcaArticulos.delete(0,END)
+        entryMarcaArticulos.insert(END,marca)
+        entryModeloArticulos.delete(0,END)
+        entryModeloArticulos.insert(END,modelo)
+        entryEanArticulos.delete(0,END)
+        entryEanArticulos.insert(END,ean)
+        comboCategoriaArticulos.delete(0,END)
+        comboCategoriaArticulos.insert(END,categoria)
+        entryStockArticulos.delete(0,END)
+        entryStockArticulos.insert(END,stock)
+        entryPrecioCostoArticulos.delete(0,END)
+        entryPrecioCostoArticulos.insert(END,pCosto)
+        entryPrecioVentaArticulos.delete(0,END)
+        entryPrecioVentaArticulos.insert(END,pVenta)
+        entryIdArticulos.config(state="readonly")
+        entryMarcaArticulos.config(state="normal")
+    tablaListarArticulos.bind("<<TreeviewSelect>>",infoArticulo)
 
     # Buscar clientes con ciut
     labelBuscarArticulos = Label(labelFrameArticulos, text="EAN:")

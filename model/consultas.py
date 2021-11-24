@@ -7,7 +7,7 @@ def guardar(conexion,datos,nombreTabla,nombreCampos,valores,vaciarEntry):
         sql = f"INSERT INTO {nombreTabla}({nombreCampos}) VALUES({valores})"
         tabla.execute(sql, datos)
         conexion.commit()
-        tabla.close
+        tabla.close()
         mb.showinfo("Ozono", "Se ha guardado correctamente")
         vaciarEntry()
     except sqlite3.IntegrityError:

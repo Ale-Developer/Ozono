@@ -1,5 +1,6 @@
 import sqlite3
 import os
+from tkinter import messagebox as mb
 
 
 
@@ -29,6 +30,7 @@ def conectar():
         conexion.row_factory = sqlite3.Row
         return conexion
     else:
+        mb.showerror("Ozono","Error en la base de datos/n Contacte al administrador.")
         return False
 
 def conectarBD():
@@ -37,4 +39,5 @@ def conectarBD():
         conexion.row_factory = sqlite3.Row
         return conexion
     else:
+        mb.showerror("Ozono","Error en la base de datos/n Contacte al administrador.")
         return False
