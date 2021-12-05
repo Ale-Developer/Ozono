@@ -11,8 +11,12 @@ from model.signup import *
 from model.conexion import *
 from model.ventanaError import *
 from model.consultas import *
+from model.validaciones import *
+
 ventanaAgregar = None
+ventanaVenta = None
 listadoCompras=[]
+listadoVentas=[]
 
 def ventanaLogin():
     ventanaLogin = Tk()
@@ -96,32 +100,11 @@ def ventanaPrincipal():
     largo = root1.winfo_screenheight()
     x = (ancho // 2) - (1000//2)
     y = (largo // 2) - (700//2)
-    root1.geometry(f"{1000}x{650}+{x}+{y}")
-    root1.resizable(0, 0)
+    root1.geometry(f"{1000}x{600}+{x}+{y}")
+    root1.resizable(0,0)
 
     global esDia
     esDia = True
-
-    # Validaciones
-    def vacios(datos):
-        for dato in datos:
-            if (dato == ""):
-                return False
-        return True
-
-    def SoloLetras(datos):
-        for letra in datos:
-            if (ord(letra) != 32):
-                if(letra.isalpha() == False):
-                    return False
-        return True
-
-    def soloNumeros(datos):
-        for numero in datos:
-            if(ord(numero) != 46):
-                if (numero.isdigit() == False):
-                    return False
-        return True
 
     def borrarListarCliente():
         for dato in tablaListarCliente.get_children():
@@ -171,7 +154,7 @@ def ventanaPrincipal():
 
     # Panel de pestañas
     nb = ttk.Notebook(root1)
-    nb.pack(fill='both', expand='yes')
+    nb.pack(side=LEFT,fill=BOTH,expand=1)
 
     # Pestañas
     p1 = ttk.Frame(nb)
@@ -195,6 +178,7 @@ def ventanaPrincipal():
         entryCPCliente.delete(0, END)
         entryTelefonoCliente.delete(0, END)
         entryIvaCliente.delete(0, END)
+
 
     def listarClientes():
         borrarListarCliente()
@@ -367,9 +351,10 @@ def ventanaPrincipal():
     tablaListarCliente.heading("col6", text="CP", anchor=CENTER)
     tablaListarCliente.heading("col7", text="Teléfono", anchor=CENTER)
     tablaListarCliente.heading("col8", text="I.V.A", anchor=CENTER)
-
+    
     tablaListarCliente.place(x=4, y=10, width=600, height=250)
-
+    
+    
     def mostrarDatoLista(evento):
         id = tablaListarCliente.item(tablaListarCliente.selection()["text"])
         valores = tablaListarCliente.item(
@@ -701,6 +686,15 @@ def ventanaPrincipal():
     
     tablaListarCompra.place(x=4, y=10, width=960, height=300)
     
+    def deleteArticuloCompra():
+        selected_item = tablaListarCompra.selection()[0]
+        tablaListarCompra.delete(selected_item)
+        
+    def borrarTodoArticuloCompra():
+        x = tablaListarCompra.get_children()
+        for item in x:
+            tablaListarCompra.delete(item)
+    
     def carritoCompra():
         global ventanaAgregar
         def cerrarTop():
@@ -709,7 +703,11 @@ def ventanaPrincipal():
             ventanaAgregar = None
         if ventanaAgregar == None:
             ventanaAgregar = Toplevel()
-            ventanaAgregar.geometry("600x600")
+            ancho = ventanaAgregar.winfo_screenwidth()
+            largo = ventanaAgregar.winfo_screenheight()
+            x = (ancho // 2) - (1000//2)
+            y = (largo // 2) - (700//2)
+            ventanaAgregar.geometry(f"{600}x{630}+{x}+{y}")
             ventanaAgregar.resizable(0,0)
             ventanaAgregar.title("Compra de articulos")
             
@@ -778,6 +776,12 @@ def ventanaPrincipal():
             entryIvaCompra = Entry(ventanaAgregar, width=33)
             entryIvaCompra.place(x=120, y=540)
             
+            def vaciarIngresarArticulo():
+                entryCodigoCompra.config(state="readonly")
+                entryMarcaCompra.config(state="readonly")
+                entryModeloCompra.config(state="readonly")
+                entryEanCompra.config(state="readonly")
+            
             def ingresarArticulo():
                 entryCodigoCompra.config(state="normal")
                 entryMarcaCompra.config(state="normal")
@@ -788,23 +792,34 @@ def ventanaPrincipal():
                 modelo= entryModeloCompra.get()
                 ean= entryEanCompra.get()
                 cantidad= entryCantidadCompra.get()
-                precioUnitario=float(entryPrecioCompra.get())
-                subtotal = float(entryPrecioCompra.get())*int(cantidad)
-                iva = (int(entryIvaCompra.get())*float(subtotal))/100
-                total = subtotal+float(iva)
-                tablaListarCompra.insert("",END,text=codigoArt,values=(marca,modelo,ean,"$"+str(precioUnitario),cantidad,subtotal,iva,total))
-                entryCodigoCompra.config(state="readonly")
-                entryMarcaCompra.config(state="readonly")
-                entryModeloCompra.config(state="readonly")
-                entryEanCompra.config(state="readonly")
-                datos = [codigoArt,
-                        precioUnitario,
-                        cantidad,
-                        subtotal,
-                        iva,
-                        total]
-                listadoCompras.append(datos)
-            
+                if (soloNumeros(cantidad)):
+                    precioUnitario=(entryPrecioCompra.get())
+                    if (soloFloat(precioUnitario)):
+                        subtotal = float(precioUnitario)*int(cantidad)
+                        iva = (int(entryIvaCompra.get())*float(subtotal))/100
+                        if (soloFloat(iva)):
+                            total = subtotal+float(iva)
+                            tablaListarCompra.insert("",END,text=codigoArt,values=(marca,modelo,ean,"$"+str(precioUnitario),cantidad,subtotal,iva,total))
+                            vaciarIngresarArticulo()
+                            datos = [codigoArt,
+                                    marca,
+                                    modelo,
+                                    precioUnitario,
+                                    cantidad,
+                                    subtotal,
+                                    iva,
+                                    total,
+                                    ean]
+                            listadoCompras.append(datos)
+                        else:
+                            vaciarIngresarArticulo()
+                            mb.showwarning("Ozono","Ingrese solo números.")
+                    else:
+                        vaciarIngresarArticulo()
+                        mb.showwarning("Ozono","Ingrese solo números.")
+                else:
+                    vaciarIngresarArticulo()
+                    mb.showwarning("Ozono","Ingrese solo números.")
             botonIngresarArticulo = Button(ventanaAgregar,text="Ingresar Articulo",command=ingresarArticulo)
             botonIngresarArticulo.place(x=180,y=580)
             
@@ -830,97 +845,385 @@ def ventanaPrincipal():
                 entryModeloCompra.insert(END,modelo)
                 entryEanCompra.delete(0,END)
                 entryEanCompra.insert(END,ean)
+                entryCantidadCompra.delete(0,END)
                 entryCodigoCompra.config(state="readonly")
                 entryMarcaCompra.config(state="readonly")
                 entryModeloCompra.config(state="readonly")
                 entryEanCompra.config(state="readonly")
             tablaListarCarritoCompra.bind("<<TreeviewSelect>>",infoCompraArticulo)
             
-            def ingresarArticulo():
-                entryCodigoCompra.config(state="normal")
-                entryMarcaCompra.config(state="normal")
-                entryModeloCompra.config(state="normal")
-                codigoArt = entryCodigoCompra.get()
-                marca= entryMarcaCompra.get()
-                modelo= entryModeloCompra.get()
-                cantidad= entryCantidadCompra.get()
-                precioUnitario=float(entryPrecioCompra.get())/int(cantidad)
-                subtotal = float(entryPrecioCompra.get())
-                iva = entryIvaCompra.get()
-                total = subtotal+float(iva)
-                tablaListarCompra.insert("",END,text=codigoArt,values=(marca,modelo,"$"+str(precioUnitario),cantidad,subtotal,iva,total))
-                entryCodigoCompra.config(state="readonly")
-                entryMarcaCompra.config(state="readonly")
-                entryModeloCompra.config(state="readonly")
-                datos = [codigoArt,
-                        precioUnitario,
-                        cantidad,
-                        subtotal,
-                        iva,
-                        total]
-                listadoCompras.append(datos)
-            
             ventanaAgregar.protocol("WM_DELETE_WINDOW",cerrarTop)
     botonAgregarArticulos = Button(p1,text="Agregar articulos",command=carritoCompra)
     botonAgregarArticulos.place(x=350,y=350)
-    
-    def Comprar():
-        pass
-    
-    botonAgregarArticulos = Button(p1,text="Comprar",command=Comprar)
-    botonAgregarArticulos.place(x=380,y=350)
         
-    # Buscar Articulo en grid:
-                        
-    
-
-    '''def vaciarEntryCompra():
-        entryMarcaCompra.config(state="normal")
-        entryMarcaCompra.delete(0, END)
-        entryModeloCompra.delete(0, END)
-        entryModeloCompra.config(state="normal")
-        entryEANCompra.delete(0, END)
-        entryCategoriaCompra.delete(0, END)
-        entryCantidadCompra.delete(0, END)
-        entryPrecioCostoCompra.delete(0, END)
-        entryPrecioVentaCompra.delete(0, END)'''
-
-    
-    '''# Buscar articulo con EAN
-    labelBuscarArticulo = Label(labelFrameCompra, text="EAN:")
-    labelBuscarArticulo.place(x=4, y=400)
-    entryBuscarArticulo = Entry(labelFrameCompra, width=33)
-    entryBuscarArticulo.place(x=50, y=400)
-    botonBuscarArticulo = Button(
-    labelFrameCompra, text="Buscar", command=BuscarArticuloEAN)
-    botonBuscarArticulo.place(x=300, y=400)
-
-    botonListarArticulo = Button(
-    labelFrameCompra, text="Listar", command=listarClientes)
-    botonListarCliente.place(x=400, y=400)
-
-    entryBuscarPorNombre = Entry(labelFrameCliente, width=33)
-    entryBuscarPorNombre.place(x=50, y=300)
-
-    def buscarPorNombre(evento):
-        buscar = ("%"+entryBuscarPorNombre.get()+"%",
-                  "%"+entryBuscarPorNombre.get()+"%",)
+    def ComprarArticulo():
+        total = 0
+        iva = 0
+        for articulo in listadoCompras:
+            total = total + articulo[7]
+            iva = iva + float(articulo[6])
+        fecha = date.today()
+        fechaCompra = fecha.strftime("%d-%m-%Y")
+        datos = (fechaCompra,total)
+        conexion = conectarBD()
         tabla = conexion.cursor()
-        tabla.execute(
-            "SELECT * FROM Clientes WHERE razonSocialCliente LIKE ? OR cuitCliente LIKE ?", buscar)
-        datosListar = tabla.fetchall()
-        for filas in tablaListarCliente.get_children():
-            tablaListarCliente.delete(filas)
-        for dato in datosListar:
-            tablaListarCliente.insert("", END, text=dato["idClientes"], values=(dato["razonSocialCliente"], dato["cuitCliente"], dato["direccionCliente"],
-                                      dato["localidadCliente"], dato["provinciaCliente"], dato["codigoPostalCliente"], dato["telefonoCliente"], dato["ivaCliente"]))
+        sqlGuardar= "INSERT INTO Compra(fechaCompra,totalCompra) VALUES(?,?)"
+        tabla.execute(sqlGuardar,datos)
+        conexion.commit()
+        sqlMax = "SELECT MAX(numeroCompra) FROM Compra"
+        tabla.execute(sqlMax)
+        datosBuscados = tabla.fetchall()
+        ultimaCompra = datosBuscados[0][0]
+        for articulo in listadoCompras:
+            cantidadNueva = int(articulo[4])
+            idArticulo = (articulo[0],)
+            tabla.execute("SELECT stockArticulo FROM Articulos WHERE codigoArticulo=?",idArticulo)
+            stockArticulo = tabla.fetchall()
+            nuevoStock = stockArticulo[0][0] + cantidadNueva
+            actualizarStock = (nuevoStock,articulo[0])
+            sql= "UPDATE Articulos SET stockArticulo=? WHERE codigoArticulo=?"
+            tabla.execute(sql,actualizarStock)
+            conexion.commit()
+            datosArticulos=(ultimaCompra,articulo[0],articulo[5])
+            tabla.execute("INSERT INTO articulosCompras(numeroCompra,idArticulo,total) VALUES(?,?,?)",datosArticulos)
+            conexion.commit()
+        tabla.close()
+        conexion.close()
+        fecha = date.today()
+        hora = datetime.now()
+        fechaTicket = fecha.strftime("%d-%m-%Y")
+        horaTicket = hora.strftime("%H%M%S")
+        nombreArchivo = f"Tickets/Compra/Ticket {fechaTicket} {horaTicket}.txt"
+        escribir = open(nombreArchivo,"w")
+        escribir.write("Ozono")
+        escribir.write("\n")
+        escribir.write("Ticket de Compra \n")
+        
+        escribir.write("Fecha: "+ fechaTicket)
+        escribir.write("\n")
+        escribir.write("***************************************")
+        escribir.write("\n")
+        for articulo in listadoCompras:
+            auxPrint1 = f"{articulo[4]}u.  x   ${articulo[3]}\n"
+            auxPrint2 = f"{articulo[1]} {articulo[2]}\n"
+            auxPrint3 = f"{articulo[8]}                 "
+            auxPrint4 = f"${articulo[7]}\n\n"
+            escribir.write(auxPrint1)
+            escribir.write(auxPrint2)
+            escribir.write(auxPrint3)
+            escribir.write(auxPrint4)
+        escribir.write("\n\n")
+        escribir.write(f"Iva:       {iva}")
+        escribir.write("\n")
+        escribir.write(f"Total:     {total}")
+        mb.showinfo("Ozono","Se ha realizado la compra correctamente!")
+        escribir.close()
+        
+    
+    botonAgregarArticulos = Button(p1,text="Comprar",command=ComprarArticulo)
+    botonAgregarArticulos.place(x=500,y=350)
+    
+    botonBorrarArticuloCompra = Button(p1,text="Borrar articulo",command=deleteArticuloCompra)
+    botonBorrarArticuloCompra.place(x=650,y=350)
+    
+    botonBorrarTodoArticuloCompra = Button(p1,text="Borrar Todo",command=borrarTodoArticuloCompra)
+    botonBorrarTodoArticuloCompra.place(x=800,y=350)
+        
+        
+    #Pestaña Venta *******************************************************************************
+    
+    labelFrameVenta = LabelFrame(p2, text="Listado de articulos")
+    labelFrameVenta.config(width=3900//4, height=1100//2)
+    labelFrameVenta.place(x=10, y=10)
 
-    entryBuscarPorNombre.bind("<Key>", buscarPorNombre)'''
+    tablaListarVenta = ttk.Treeview(labelFrameVenta, columns=(
+        "col1", "col2", "col3", "col4", "col5", "col6", "col7", "col8"))
+    tablaListarVenta.column("#0", width=2)
+
+    tablaListarVenta.column("col1", width=33, anchor=CENTER)
+    tablaListarVenta.column("col2", width=33, anchor=CENTER)
+    tablaListarVenta.column("col3", width=33, anchor=CENTER)
+    tablaListarVenta.column("col4", width=33, anchor=CENTER)
+    tablaListarVenta.column("col5", width=33, anchor=CENTER)
+    tablaListarVenta.column("col6", width=20, anchor=CENTER)
+    tablaListarVenta.column("col7", width=20, anchor=CENTER)
+    tablaListarVenta.column("col8", width=20, anchor=CENTER)
+
+    tablaListarVenta.heading("#0", text="ID", anchor=CENTER)
+    tablaListarVenta.heading("col1", text="Marca", anchor=CENTER)
+    tablaListarVenta.heading("col2", text="Modelo", anchor=CENTER)
+    tablaListarVenta.heading("col3", text="EAN", anchor=CENTER)
+    tablaListarVenta.heading("col4", text="Precio", anchor=CENTER)
+    tablaListarVenta.heading("col5", text="Cantidad", anchor=CENTER)
+    tablaListarVenta.heading("col6", text="Subtotal", anchor=CENTER)
+    tablaListarVenta.heading("col7", text="I.V.A", anchor=CENTER)
+    tablaListarVenta.heading("col8", text="Total", anchor=CENTER)
+
+    tablaListarVenta.place(x=4, y=10, width=960, height=300)
+
+    def deleteArticuloVenta():
+        selected_item = tablaListarVenta.selection()[0]
+        tablaListarVenta.delete(selected_item)
+
+    def borrarTodoArticuloVenta():
+        x = tablaListarVenta.get_children()
+        for item in x:
+            tablaListarVenta.delete(item)
+
+    def carritoVenta():
+        global ventanaVenta
+        def cerrarTopVenta():
+            global ventanaVenta
+            ventanaVenta.destroy()
+            ventanaVenta = None
+        if ventanaVenta == None:
+            ventanaVenta = Toplevel()
+            ancho = ventanaVenta.winfo_screenwidth()
+            largo = ventanaVenta.winfo_screenheight()
+            x = (ancho // 2) - (1000//2)
+            y = (largo // 2) - (700//2)
+            ventanaVenta.geometry(f"{600}x{630}+{x}+{y}")
+            ventanaVenta.resizable(0,0)
+            ventanaVenta.title("Venta de articulos")
+            
+            def listarArticulosVenta():
+                borrarListarArticulos()
+                tabla = conexion.cursor()
+                sql = "SELECT * FROM Articulos"
+                tabla.execute(sql)
+                datosListar = tabla.fetchall()
+                tabla.close()
+                for dato in datosListar:
+                    tablaListarCarritoVenta.insert("", END, text=dato["codigoArticulo"], values=(dato["marcaArticulo"], 
+                                            dato["modeloArticulo"],dato["EAN"],dato["precioVenta"]))
+            
+            labelFrameCarritoVenta = ttk.Labelframe(ventanaVenta, text="Venta")
+            labelFrameCarritoVenta.config(width=1150//2, height=1200//2)
+            labelFrameCarritoVenta.place(x=10,y=10)
+            
+            tablaListarCarritoVenta = ttk.Treeview(labelFrameCarritoVenta, columns=(
+                                            "col1", "col2", "col3","col4"))
+            tablaListarCarritoVenta.column("#0", width=15)
+
+            tablaListarCarritoVenta.column("col1", width=33, anchor=CENTER)
+            tablaListarCarritoVenta.column("col2", width=33, anchor=CENTER)
+            tablaListarCarritoVenta.column("col3", width=33, anchor=CENTER)
+            tablaListarCarritoVenta.column("col4", width=33, anchor=CENTER)
+                        
+            tablaListarCarritoVenta.heading("#0", text="ID", anchor=CENTER)
+            tablaListarCarritoVenta.heading("col1", text="Marca", anchor=CENTER)
+            tablaListarCarritoVenta.heading("col2", text="Modelo", anchor=CENTER)
+            tablaListarCarritoVenta.heading("col3", text="EAN", anchor=CENTER)
+            tablaListarCarritoVenta.heading("col4", text="Precio", anchor=CENTER)
+            
+            tablaListarCarritoVenta.place(x=4, y=10, width=550, height=250)
+            
+            labelCodigoVenta = Label(ventanaVenta, text="Código: ")
+            labelCodigoVenta.place(x=30, y=300)
+            entryCodigoVenta = Entry(ventanaVenta, width=33)
+            entryCodigoVenta.place(x=120, y=300)
+            
+            labelMarcaVenta = Label(ventanaVenta, text="Marca: ")
+            labelMarcaVenta.place(x=30, y=340)
+            entryMarcaVenta = Entry(ventanaVenta, width=33)
+            entryMarcaVenta.place(x=120, y=340)
+            
+            labelModeloVenta = Label(ventanaVenta, text="Modelo: ")
+            labelModeloVenta.place(x=30, y=380)
+            entryModeloVenta = Entry(ventanaVenta, width=33)
+            entryModeloVenta.place(x=120, y=380)
+            
+            labelEanVenta = Label(ventanaVenta, text="EAN: ")
+            labelEanVenta.place(x=30, y=420)
+            entryEanVenta = Entry(ventanaVenta, width=33)
+            entryEanVenta.place(x=120, y=420)
+            
+            labelPrecioVenta = Label(ventanaVenta, text="Precio: ")
+            labelPrecioVenta.place(x=30, y=460)
+            entryPrecioVenta = Entry(ventanaVenta, width=33)
+            entryPrecioVenta.place(x=120, y=460)
+            
+            labelCantidadVenta = Label(ventanaVenta, text="Cantidad: ")
+            labelCantidadVenta.place(x=30, y=500)
+            entryCantidadVenta = Entry(ventanaVenta, width=33)
+            entryCantidadVenta.place(x=120, y=500)
+                        
+            def ingresarArticuloVenta():
+                entryCodigoVenta.config(state="normal")
+                entryMarcaVenta.config(state="normal")
+                entryModeloVenta.config(state="normal")
+                entryEanVenta.config(state="normal")
+                entryPrecioVenta.config(state="normal")
+                codigoArt = entryCodigoVenta.get()
+                marca = entryMarcaVenta.get()
+                modelo = entryModeloVenta.get()
+                ean = entryEanVenta.get()
+                precioVenta = entryPrecioVenta.get()
+                cantidad = entryCantidadVenta.get()
+                if (soloNumeros(cantidad) and soloFloat(precioVenta)):
+                    subtotal = float(entryPrecioVenta.get())*int(cantidad)
+                    iva = subtotal * 0.21
+                    if (soloFloat(iva)):
+                        total = subtotal + iva
+                        tablaListarVenta.insert("",END,text=codigoArt,values=(marca,modelo,ean,"$"+str(precioVenta),cantidad,subtotal,iva,total))
+                        entryCodigoVenta.config(state="readonly")
+                        entryMarcaVenta.config(state="readonly")
+                        entryModeloVenta.config(state="readonly")
+                        entryEanVenta.config(state="readonly")
+                        entryPrecioVenta.config(state="readonly")
+                        datos = [codigoArt,
+                            marca,
+                            modelo,
+                            precioVenta,
+                            cantidad,
+                            subtotal,
+                            iva,
+                            total,
+                            ean]
+                        listadoVentas.append(datos)
+                    else:
+                        mb.showwarning("Ozono","Ingrese solo números.")
+                else:
+                    entryCodigoVenta.config(state="readonly")
+                    entryMarcaVenta.config(state="readonly")
+                    entryModeloVenta.config(state="readonly")
+                    entryEanVenta.config(state="readonly")
+                    entryPrecioVenta.config(state="readonly")
+                    mb.showwarning("Ozono","Ingrese solo números.")
+            
+            botonIngresarArticulo = Button(ventanaVenta,text="Ingresar Articulo",command=ingresarArticuloVenta)
+            botonIngresarArticulo.place(x=180,y=580)
+            
+            botonListarArticulos = Button(
+            ventanaVenta, text="Listar", command=listarArticulosVenta)
+            botonListarArticulos.place(x=110, y=580)
+            
+            def infoVentaArticulo(evento):
+                index= tablaListarCarritoVenta.item(tablaListarCarritoVenta.selection())['text']
+                detalles=tablaListarCarritoVenta.item(tablaListarCarritoVenta.selection())['values']
+                marca=f"{detalles[0]}"
+                modelo=f"{detalles[1]}"
+                ean=f"{detalles[2]}"
+                precio=f"{detalles[3]}"
+                entryCodigoVenta.config(state="normal")
+                entryMarcaVenta.config(state="normal")
+                entryModeloVenta.config(state="normal")
+                entryEanVenta.config(state="normal")
+                entryPrecioVenta.config(state="normal")
+                entryCodigoVenta.delete(0,END)
+                entryCodigoVenta.insert(END,index)
+                entryMarcaVenta.delete(0,END)
+                entryMarcaVenta.insert(END,marca)
+                entryModeloVenta.delete(0,END)
+                entryModeloVenta.insert(END,modelo)
+                entryEanVenta.delete(0,END)
+                entryEanVenta.insert(END,ean)
+                entryPrecioVenta.delete(0,END)
+                entryPrecioVenta.insert(END,precio)
+                entryCantidadVenta.delete(0,END)
+                entryCodigoVenta.config(state="readonly")
+                entryMarcaVenta.config(state="readonly")
+                entryModeloVenta.config(state="readonly")
+                entryEanVenta.config(state="readonly")
+                entryPrecioVenta.config(state="readonly")
+            tablaListarCarritoVenta.bind("<<TreeviewSelect>>",infoVentaArticulo)
+            
+                    
+            ventanaVenta.protocol("WM_DELETE_WINDOW",cerrarTopVenta)
+    botonAgregarArticulos = Button(p2,text="Agregar articulos",command=carritoVenta)
+    botonAgregarArticulos.place(x=350,y=350)
+        
+    def VenderArticulo():
+        total = 0
+        iva = 0
+        subtotal = 0
+        for articulo in listadoVentas:
+            subtotal = subtotal + articulo[5]
+            total = total + articulo[7]
+            iva = iva + float(articulo[6])
+        fecha = date.today()
+        fechaVenta = fecha.strftime("%d-%m-%Y")
+        datos = (fechaVenta,subtotal,iva,total)
+        conexion = conectarBD()
+        tabla = conexion.cursor()
+        sqlGuardar= "INSERT INTO Venta(fechaVenta,subtotalVenta,ivaVenta,totalVenta) VALUES(?,?,?,?)"
+        tabla.execute(sqlGuardar,datos)
+        conexion.commit()
+        sqlMax = "SELECT MAX(numeroVenta) FROM Venta"
+        tabla.execute(sqlMax)
+        datosBuscados = tabla.fetchall()
+        ultimaVenta = datosBuscados[0][0]
+        for articulo in listadoVentas:
+            cantidadNueva = int(articulo[4])
+            idArticulo = (articulo[0],)
+            tabla.execute("SELECT stockArticulo FROM Articulos WHERE codigoArticulo=?",idArticulo)
+            stockArticulo = tabla.fetchall()
+            nuevoStock = stockArticulo[0][0] - cantidadNueva
+            actualizarStock = (nuevoStock,articulo[0])
+            sql= "UPDATE Articulos SET stockArticulo=? WHERE codigoArticulo=?"
+            tabla.execute(sql,actualizarStock)
+            conexion.commit()
+            datosArticulos=(ultimaVenta,articulo[0],articulo[2],articulo[3],articulo[4],articulo[5])
+            tabla.execute("INSERT INTO articulosVentas(numeroVenta,codigoArticulo,cantidadArticulo,subtotalArticulo,ivaArticulo,totalArticulo) VALUES(?,?,?,?,?,?)",datosArticulos)
+            conexion.commit()
+        tabla.close()
+        conexion.close()
+        fecha = date.today()
+        hora = datetime.now()
+        fechaTicket = fecha.strftime("%d-%m-%Y")
+        horaTicket = hora.strftime("%H%M%S")
+        nombreArchivo = f"Tickets/Venta/Ticket {fechaTicket} {horaTicket}.txt"
+        escribir = open(nombreArchivo,"w")
+        escribir.write("Ozono")
+        escribir.write("\n")
+        escribir.write("Ticket de venta \n")
+        
+        escribir.write("Fecha: "+ fechaTicket)
+        escribir.write("\n")
+        escribir.write("***************************************")
+        escribir.write("\n")
+        for articulo in listadoVentas:
+            auxPrint1 = f"{articulo[4]}u.  x   ${articulo[3]}\n"
+            auxPrint2 = f"{articulo[1]} {articulo[2]}\n"
+            auxPrint3 = f"{articulo[8]}                 "
+            auxPrint4 = f"${articulo[7]}\n\n"
+            escribir.write(auxPrint1)
+            escribir.write(auxPrint2)
+            escribir.write(auxPrint3)
+            escribir.write(auxPrint4)
+        escribir.write("\n\n")
+        escribir.write(f"Iva:                       {iva}")
+        escribir.write("\n")
+        escribir.write(f"Sub-Total:                 {subtotal}")
+        escribir.write("\n")
+        escribir.write(f"Total:                     {total}")
+        escribir.write("\n")
+        escribir.write("\n")
+        escribir.write("***************************************")
+        escribir.write("\n")
+        escribir.write("Defensa del consumidor 08002226678")
+        escribir.write("\n")
+        escribir.write("        MUCHAS GRACIAS")
+        mb.showinfo("Ozono","Se ha realizado la venta correctamente!")
+        escribir.close()
+        
+
+    botonAgregarArticulos = Button(p2,text="Vender",command=VenderArticulo)
+    botonAgregarArticulos.place(x=500,y=350)
+    
+    botonBorrarArticuloVenta = Button(p2,text="Borrar articulo",command=deleteArticuloVenta)
+    botonBorrarArticuloVenta.place(x=650,y=350)
+    
+    botonBorrarTodoArticuloVenta = Button(p2,text="Borrar Todo",command=borrarTodoArticuloVenta)
+    botonBorrarTodoArticuloVenta.place(x=800,y=350)
+    
+    # Buscar Articulo en grid:
 
     #Pestaña articulo ****************************************************************************
     
     def vaciarEntryArticulos():
         entryIdArticulos.config(state="normal")
+        entryEanArticulos.config(state="normal")
         entryIdArticulos.delete(0, END)
         entryMarcaArticulos.delete(0, END)
         entryModeloArticulos.config(state="normal")

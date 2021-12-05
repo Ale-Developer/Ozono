@@ -1,7 +1,3 @@
-import os
-from tkinter import *
-
-
 # Validaciones
 def vacios(datos):
     for dato in datos:
@@ -23,3 +19,9 @@ def soloNumeros(datos):
                 return False
     return True
 
+def soloFloat(datos):
+    try:
+        float(datos)
+        return True
+    except ValueError:
+        return False
