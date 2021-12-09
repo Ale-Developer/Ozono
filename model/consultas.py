@@ -19,8 +19,17 @@ def modificar():
 def buscar():
     pass
 
-def eliminar():
-    pass
+def eliminar(conexion,datos,nombreTabla,nombreCampos,valores,vaciarEntry):
+    try:
+        tabla = conexion.cursor()
+        sql = f"DELETE FROM {nombreTabla} WHERE {nombreCampos} = {valores}"
+        tabla.execute(sql, datos)
+        conexion.commit()
+        tabla.close()
+        mb.showinfo("Ozono", "Se ha borrado correctamente.")
+        vaciarEntry()
+    except sqlite3.IntegrityError:
+        mb.showwarning("Ozono","Ya existe ese registro")
 
 def listar():
     pass

@@ -12,6 +12,7 @@ from model.conexion import *
 from model.ventanaError import *
 from model.consultas import *
 from model.validaciones import *
+import random
 
 ventanaAgregar = None
 ventanaVenta = None
@@ -91,11 +92,12 @@ def ventanaLogin():
 
     ventanaLogin.mainloop()
 
+
+
 ventanaPrincipal = None
 def ventanaPrincipal():
     root1 = Tk()
     root1.title("Ozono")
-    root1.config(bg="gray")
     ancho = root1.winfo_screenwidth()
     largo = root1.winfo_screenheight()
     x = (ancho // 2) - (1000//2)
@@ -169,6 +171,7 @@ def ventanaPrincipal():
     def vaciarEntryCliente():
         entryIdCliente.config(state="normal")
         entryIdCliente.delete(0, END)
+        entryIdCliente.config(state="readonly")
         entryRSocialCliente.delete(0, END)
         entryCuitCliente.config(state="normal")
         entryCuitCliente.delete(0, END)
@@ -192,23 +195,31 @@ def ventanaPrincipal():
 
     def modificarCliente():
         entryIdCliente.config(state="normal")
-        datosClientes = (entryRSocialCliente.get(), entryCuitCliente.get(), entryDireccionCliente.get(), entryLocalidadCliente.get(
-        ), entryProvinciaCliente.get(), entryCPCliente.get(), entryTelefonoCliente.get(), entryIvaCliente.get(), entryCuitCliente.get())
-        entryIdCliente.config(state="disabled")
+        datosClientes = (entryRSocialCliente.get(), 
+                        entryCuitCliente.get(), 
+                        entryDireccionCliente.get(), 
+                        entryLocalidadCliente.get(), 
+                        entryProvinciaCliente.get(), 
+                        entryCPCliente.get(), 
+                        entryTelefonoCliente.get(), 
+                        entryIvaCliente.get(), 
+                        entryCuitCliente.get())
+        entryIdCliente.config(state="readonly")
         if (datosClientes[8] != ""):
             if(vacios(datosClientes)):
                 tabla = conexion.cursor()
-                sql = "UPDATE clientes SET razonSocialCliente=?,cuitCliente=?,direccionCliente=?,localidadCliente=?,provinciaCliente=?,codigoPostalCliente=?,telefonoCliente=?,ivaCliente=? WHERE cuitCliente=?"
+                sql = "UPDATE Clientes SET razonSocialCliente=?,cuitCliente=?,direccionCliente=?,localidadCliente=?,provinciaCliente=?,codigoPostalCliente=?,telefonoCliente=?,ivaCliente=? WHERE cuitCliente=?"
                 tabla.execute(sql, datosClientes)
                 conexion.commit
                 tabla.close
+                vaciarEntryCliente()
                 mb.showinfo("Sistema", "Se ha modificado correctamente")
             else:
                 mb.showinfo("Sistema", "Complete todos los campos")
         else:
             mb.showwarning("Sistema", "Debe ingresar un dato ha modificar")
 
-
+    
     def getDatoCliente():
         datos = (entryRSocialCliente.get(), 
                         entryCuitCliente.get(), 
@@ -219,6 +230,14 @@ def ventanaPrincipal():
                         entryTelefonoCliente.get(), 
                         entryIvaCliente.get())
         return datos
+
+    def borrarCliente():
+        datos = (entryIdCliente.get(),)
+        nombreTabla = "Clientes"
+        nombreCampos = "idClientes"
+        valores = "?"
+        eliminar(conexion,datos,nombreTabla,nombreCampos,valores,vaciarEntryCliente)
+            
 
     def guardarCliente():
         datosCliente = getDatoCliente()
@@ -236,6 +255,7 @@ def ventanaPrincipal():
     labelFrameCliente = LabelFrame(p3, text="Clientes")
     labelFrameCliente.config(width=1440//4, height=1100//2)
     labelFrameCliente.place(x=10, y=10)
+    
 
     labelIdCliente = Label(labelFrameCliente, text="ID: ")
     labelIdCliente.place(x=30, y=30)
@@ -285,15 +305,19 @@ def ventanaPrincipal():
 
     botonCliente = Button(
         labelFrameCliente, text="Guardar", command=guardarCliente)
-    botonCliente.place(x=145, y=490)
+    botonCliente.place(x=100, y=490)
 
     botonCliente = Button(labelFrameCliente, text="Limpiar",
-                          command=vaciarEntryCliente)
-    botonCliente.place(x=45, y=490)
+                        command=vaciarEntryCliente)
+    botonCliente.place(x=25, y=490)
 
     botonCliente = Button(
         labelFrameCliente, text="Modificar", command=modificarCliente)
-    botonCliente.place(x=245, y=490)
+    botonCliente.place(x=175, y=490)
+    
+    botonCliente = Button(
+        labelFrameCliente, text="Borrar", command=borrarCliente)
+    botonCliente.place(x=260, y=490)
 
     # Buscar Cliente en grid:
 
@@ -307,11 +331,12 @@ def ventanaPrincipal():
             if(len(datosCliente) > 0):
                 vaciarEntryCliente()
                 for dato in datosCliente:
+                    entryIdCliente.config(state="normal")
                     entryIdCliente.insert(END, dato["idClientes"])
                     entryIdCliente.config(state="readonly")
                     entryRSocialCliente.insert(END, dato["razonSocialCliente"])
+                    entryCuitCliente.config(state="normal")
                     entryCuitCliente.insert(END, dato["cuitCliente"])
-                    entryCuitCliente.config(state="disabled")
                     entryDireccionCliente.insert(END, dato["direccionCliente"])
                     entryLocalidadCliente.insert(END, dato["localidadCliente"])
                     entryProvinciaCliente.insert(END, dato["provinciaCliente"])
@@ -354,13 +379,41 @@ def ventanaPrincipal():
     
     tablaListarCliente.place(x=4, y=10, width=600, height=250)
     
+    def infoCliente(evento):
+        index= tablaListarCliente.item(tablaListarCliente.selection())['text']
+        detalles=tablaListarCliente.item(tablaListarCliente.selection())['values']
+        rSocial=f"{detalles[0]}"
+        cuit=f"{detalles[1]}"
+        direccion=f"{detalles[2]}"
+        localidad=f"{detalles[3]}"
+        provincia=f"{detalles[4]}"
+        cPostal=f"{detalles[5]}"
+        telefono=f"{detalles[6]}"
+        iva=f"{detalles[7]}"
+        entryIdCliente.config(state="normal")
+        entryRSocialCliente.config(state="normal")
+        entryIdCliente.delete(0,END)
+        entryIdCliente.insert(END,index)
+        entryRSocialCliente.delete(0,END)
+        entryRSocialCliente.insert(END,rSocial)
+        entryCuitCliente.delete(0,END)
+        entryCuitCliente.insert(END,cuit)
+        entryDireccionCliente.delete(0,END)
+        entryDireccionCliente.insert(END,direccion)
+        entryLocalidadCliente.delete(0,END)
+        entryLocalidadCliente.insert(END,localidad)
+        entryProvinciaCliente.delete(0,END)
+        entryProvinciaCliente.insert(END,provincia)
+        entryCPCliente.delete(0,END)
+        entryCPCliente.insert(END,cPostal)
+        entryTelefonoCliente.delete(0,END)
+        entryTelefonoCliente.insert(END,telefono)
+        entryIvaCliente.delete(0,END)
+        entryIvaCliente.insert(END,iva)
+        entryIdCliente.config(state="readonly")
+        entryRSocialCliente.config(state="normal")
+    tablaListarCliente.bind("<<TreeviewSelect>>",infoCliente)
     
-    def mostrarDatoLista(evento):
-        id = tablaListarCliente.item(tablaListarCliente.selection()["text"])
-        valores = tablaListarCliente.item(
-            tablaListarCliente.selection())["values"]
-    tablaListarCliente.bind("<<TreeviewSelect>>", mostrarDatoLista)
-
     # Buscar clientes con ciut
     labelBuscarCliente = Label(labelFrameCliente, text="CUIT:")
     labelBuscarCliente.place(x=4, y=400)
@@ -374,11 +427,9 @@ def ventanaPrincipal():
     labelFrameCliente, text="Listar", command=listarClientes)
     botonListarCliente.place(x=400, y=400)
 
-    entryBuscarPorNombre = Entry(labelFrameCliente, width=33)
-    entryBuscarPorNombre.place(x=50, y=300)
 
-    def buscarPorNombre(evento):
-        buscar = ("%"+entryBuscarPorNombre.get()+"%",
+    '''def buscarPorNombre(evento):
+        buscar = ("%"+.get()+"%",
                   "%"+entryBuscarPorNombre.get()+"%",)
         tabla = conexion.cursor()
         tabla.execute(
@@ -388,15 +439,23 @@ def ventanaPrincipal():
             tablaListarCliente.delete(filas)
         for dato in datosListar:
             tablaListarCliente.insert("", END, text=dato["idClientes"], values=(dato["razonSocialCliente"], dato["cuitCliente"], dato["direccionCliente"],
-                                      dato["localidadCliente"], dato["provinciaCliente"], dato["codigoPostalCliente"], dato["telefonoCliente"], dato["ivaCliente"]))
+                                      dato["localidadCliente"], dato["provinciaCliente"], dato["codigoPostalCliente"], dato["telefonoCliente"], dato["ivaCliente"]))'''
 
-    entryBuscarPorNombre.bind("<Key>", buscarPorNombre)
+    #entryBuscarPorNombre.bind("<Key>", buscarPorNombre)
+    
+    def modoOscuro():
+        labelFrameCliente.config(background= "Gray26")
+        labelBuscarCliente.config(background="Gray26")
+    def modoDia():
+        labelFrameCliente.config(background= "Gray95")
+        labelBuscarCliente.config(background= "Gray95")
 
 ##### PROVEEDORES   ################################################################################
     ## Funciones
     def vaciarEntryProveedor():
         entryIdProveedor.config(state="normal")
         entryIdProveedor.delete(0, END)
+        entryIdProveedor.config(state="readonly")
         entryRSocialProveedor.delete(0, END)
         entryCuitProveedor.config(state="normal")
         entryCuitProveedor.delete(0, END)
@@ -435,7 +494,7 @@ def ventanaPrincipal():
         entryTelefonoProveedor.get(), 
         entryIvaProveedor.get(), 
         entryCuitProveedor.get())
-        entryIdProveedor.config(state="disabled")
+        entryIdProveedor.config(state="readonly")
         if (datosProveedor[8] != ""):
             if(vacios(datosProveedor)):
                 tabla = conexion.cursor()
@@ -460,6 +519,12 @@ def ventanaPrincipal():
                 entryIvaProveedor.get())
         return datos
 
+    def borrarProveedor():
+        datos = (entryIdProveedor.get(),)
+        nombreTabla = "Proveedores"
+        nombreCampos = "idProveedor"
+        valores = "?"
+        eliminar(conexion,datos,nombreTabla,nombreCampos,valores,vaciarEntryProveedor)
 
     def guardarProveedor():
         datos = getDatosProveedor()
@@ -526,15 +591,19 @@ def ventanaPrincipal():
 
     botonProveedor = Button(
         labelFrameProveedor, text="Guardar", command=guardarProveedor)
-    botonProveedor.place(x=145, y=490)
+    botonProveedor.place(x=100, y=490)
 
     botonProveedor = Button(labelFrameProveedor, text="Limpiar",
-                          command=vaciarEntryProveedor)
-    botonProveedor.place(x=45, y=490)
+                        command=vaciarEntryProveedor)
+    botonProveedor.place(x=25, y=490)
 
     botonProveedor = Button(
         labelFrameProveedor, text="Modificar", command=modificarProveedor)
-    botonProveedor.place(x=245, y=490)
+    botonProveedor.place(x=175, y=490)
+    
+    botonProveedor = Button(
+        labelFrameProveedor, text="Borrar", command=borrarProveedor)
+    botonProveedor.place(x=260, y=490)
 
     # Buscar proveedor en grid:
 
@@ -548,6 +617,7 @@ def ventanaPrincipal():
             if(len(datosProveedor) > 0):
                 vaciarEntryProveedor()
                 for dato in datosProveedor:
+                    entryIdProveedor.config(state="normal")
                     entryIdProveedor.insert(END, dato["idProveedor"])
                     entryIdProveedor.config(state="readonly")
                     entryRSocialProveedor.insert(END, dato["razonSocialProveedor"])
@@ -595,11 +665,40 @@ def ventanaPrincipal():
 
     tablaListarProveedor.place(x=4, y=10, width=600, height=250)
 
-    def mostrarDatoLista(evento):
-        id = tablaListarProveedor.item(tablaListarProveedor.selection()["text"])
-        valores = tablaListarProveedor.item(
-            tablaListarProveedor.selection())["values"]
-    tablaListarProveedor.bind("<<TreeviewSelect>>", mostrarDatoLista)
+    def infoProovedor(evento):
+        index= tablaListarProveedor.item(tablaListarProveedor.selection())['text']
+        detalles=tablaListarProveedor.item(tablaListarProveedor.selection())['values']
+        rSocial=f"{detalles[0]}"
+        cuit=f"{detalles[1]}"
+        direccion=f"{detalles[2]}"
+        localidad=f"{detalles[3]}"
+        provincia=f"{detalles[4]}"
+        cPostal=f"{detalles[5]}"
+        telefono=f"{detalles[6]}"
+        iva=f"{detalles[7]}"
+        entryIdProveedor.config(state="normal")
+        entryRSocialProveedor.config(state="normal")
+        entryIdProveedor.delete(0,END)
+        entryIdProveedor.insert(END,index)
+        entryRSocialProveedor.delete(0,END)
+        entryRSocialProveedor.insert(END,rSocial)
+        entryCuitProveedor.delete(0,END)
+        entryCuitProveedor.insert(END,cuit)
+        entryDireccionProveedor.delete(0,END)
+        entryDireccionProveedor.insert(END,direccion)
+        entryLocalidadProveedor.delete(0,END)
+        entryLocalidadProveedor.insert(END,localidad)
+        entryProvinciaProveedor.delete(0,END)
+        entryProvinciaProveedor.insert(END,provincia)
+        entryCPProveedor.delete(0,END)
+        entryCPProveedor.insert(END,cPostal)
+        entryTelefonoProveedor.delete(0,END)
+        entryTelefonoProveedor.insert(END,telefono)
+        entryIvaProveedor.delete(0,END)
+        entryIvaProveedor.insert(END,iva)
+        entryIdProveedor.config(state="readonly")
+        entryRSocialProveedor.config(state="normal")
+    tablaListarProveedor.bind("<<TreeviewSelect>>",infoProovedor)
 
     # Buscar Proveedor con ciut
     labelBuscarProveedor = Label(labelFrameProveedor, text="CUIT:")
@@ -614,7 +713,7 @@ def ventanaPrincipal():
     labelFrameProveedor, text="Listar", command=listarProveedor)
     botonListarProveedor.place(x=400, y=400)
 
-    entryBuscarPorNombre = Entry(labelFrameProveedor, width=33)
+    '''entryBuscarPorNombre = Entry(labelFrameProveedor, width=33)
     entryBuscarPorNombre.place(x=50, y=300)
 
     def buscarPorNombre(evento):
@@ -630,28 +729,32 @@ def ventanaPrincipal():
             tablaListarProveedor.insert("", END, text=dato["idProveedor"], values=(dato["razonSocialProveedor"], dato["cuitProveedor"], dato["direccionProveedor"],
                                     dato["localidadProveedor"], dato["provinciaProveedor"], dato["codigoPostalProveedor"], dato["telefonoProveedor"], dato["ivaProveedor"]))
 
-    entryBuscarPorNombre.bind("<Key>", buscarPorNombre)
+    entryBuscarPorNombre.bind("<Key>", buscarPorNombre)'''
 
     ########################################
 
     # Funcion de modo oscuro
-    '''def switch():
+    def switch():
         global esDia
         # determina si es dia o noche
         if esDia:
+            modoOscuro()
             diaBoton.config(image=noche)
             esDia = False
         else:
+            modoDia()
             diaBoton.config(image=dia)
-            esDia = True'''
+            esDia = True
+            
 
     # Imagenes del modo oscuro
     dia = PhotoImage(file="image/mododia.png")
     noche = PhotoImage(file="image/modonoche.png")
 
     # Boton del modo oscuro
-    # diaBoton = Button(labelFrameCliente, image=dia,bd=0,command=switch)
-    # diaBoton.place(x=450,y=450)
+    diaBoton = Button(labelFrameCliente, image=dia,bd=0,command=switch)
+    diaBoton.place(x=450,y=450)
+    
 
     #Pestaña Compra #######################################################################
 
@@ -1163,7 +1266,7 @@ def ventanaPrincipal():
             sql= "UPDATE Articulos SET stockArticulo=? WHERE codigoArticulo=?"
             tabla.execute(sql,actualizarStock)
             conexion.commit()
-            datosArticulos=(ultimaVenta,articulo[0],articulo[2],articulo[3],articulo[4],articulo[5])
+            datosArticulos=(ultimaVenta,articulo[0],articulo[4],articulo[5],articulo[6],articulo[7])
             tabla.execute("INSERT INTO articulosVentas(numeroVenta,codigoArticulo,cantidadArticulo,subtotalArticulo,ivaArticulo,totalArticulo) VALUES(?,?,?,?,?,?)",datosArticulos)
             conexion.commit()
         tabla.close()
@@ -1249,21 +1352,25 @@ def ventanaPrincipal():
 
     def modificarArticulos():
         entryIdArticulos.config(state="normal")
-        datosArticulos = (entryMarcaArticulos.get(), entryModeloArticulos.get(),entryEanArticulos.get(), comboCategoriaArticulos.get(), 
-                        entryStockArticulos.get(), entryPrecioCostoArticulos.get(), entryPrecioVentaArticulos.get())
-        entryIdArticulos.config(state="disabled")
-        if (datosArticulos[7] != ""):
-            if(vacios(datosArticulos)):
-                tabla = conexion.cursor()
-                sql = "UPDATE Articulos SET marcaArticulo=?,modeloArticulo=?,EAN=?,categoriaArticulo=?,stockArticulo=?,precioCosto=?,precioVenta=? WHERE EAN=?"
-                tabla.execute(sql, datosArticulos)
-                conexion.commit
-                tabla.close
-                mb.showinfo("Sistema", "Se ha modificado correctamente")
-            else:
-                mb.showinfo("Sistema", "Complete todos los campos")
+        datosArticulos = (entryMarcaArticulos.get(), 
+                        entryModeloArticulos.get(),
+                        entryEanArticulos.get(), 
+                        comboCategoriaArticulos.get(), 
+                        entryStockArticulos.get(), 
+                        entryPrecioCostoArticulos.get(), 
+                        entryPrecioVentaArticulos.get(),
+                        entryIdArticulos.get())
+        entryIdArticulos.config(state="readonly")
+        if(vacios(datosArticulos)):
+            tabla = conexion.cursor()
+            sql = "UPDATE Articulos SET marcaArticulo=?,modeloArticulo=?,EAN=?,categoriaArticulo=?,stockArticulo=?,precioCosto=?,precioVenta=? WHERE codigoArticulo=?"
+            tabla.execute(sql, datosArticulos)
+            conexion.commit
+            tabla.close
+            mb.showinfo("Sistema", "Se ha modificado correctamente")
         else:
-            mb.showwarning("Sistema", "Debe ingresar un dato ha modificar")
+            mb.showinfo("Sistema", "Complete todos los campos")
+
 
 
     def getDatoArticulos():
@@ -1363,11 +1470,12 @@ def ventanaPrincipal():
                 vaciarEntryArticulos()
                 for dato in datosEan:
                     entryIdArticulos.insert(END, dato["codigoArticulo"])
+                    entryIdArticulos.config(state="normal")
                     entryIdArticulos.config(state="readonly")
                     entryMarcaArticulos.insert(END, dato["marcaArticulo"])
                     entryModeloArticulos.insert(END, dato["modeloArticulo"])
+                    entryEanArticulos.config(state="normal")
                     entryEanArticulos.insert(END, dato["EAN"])
-                    entryEanArticulos.config(state="disabled")
                     comboCategoriaArticulos.insert(END, dato["categoriaArticulo"])
                     entryStockArticulos.insert(END, dato["stockArticulo"])
                     entryPrecioCostoArticulos.insert(END, dato["precioCosto"])
